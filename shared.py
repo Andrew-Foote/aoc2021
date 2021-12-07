@@ -12,7 +12,7 @@ def register(day, level):
 			return solution(get_input(day))
 
 		solutions[day][level] = wrapper
-		return wrapper
+		return solution
 
 	return wrap
 
