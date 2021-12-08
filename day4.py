@@ -57,4 +57,19 @@ def level1(ip):
             if wins(board_marks):
                 return score(call, board, board_marks)
 
+@register(day=4, level=2)
+def level2(ip):
+    calls, boards = parse(ip)
+    won = set()
+
+    for call, marks in bingo(calls, boards):
+        for i, board in enumerate(boards):
+            board_marks = marks[i]
+
+            if wins(board_marks):
+                won.add(i)
+
+            if len(won) >= len(boards):
+                return score(call, board, board_marks)
+
 main(__name__)
