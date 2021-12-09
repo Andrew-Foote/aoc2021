@@ -6,7 +6,7 @@ def parse(ip):
 	ip.close()
 
 def restructure_data(ages):
-	vec = np.zeros(9)
+	vec = np.zeros(9, dtype='object')
 
 	for age in ages:
 		vec[age] += 1
@@ -23,7 +23,7 @@ TRANS = np.array([
 	[1, 0, 0,  0, 0, 0,  0, 1, 0], # age6(t) = age7(t0) + age0(t0)
 	[0, 0, 0,  0, 0, 0,  0, 0, 1], # age7(t) = age8(t0)
 	[1, 0, 0,  0, 0, 0,  0, 0, 0], # age8(t) = age0(t0)
-])
+], dtype='object')
 
 @register(day=6, level=1)
 def level1(ip):
@@ -44,7 +44,6 @@ def level2(ip):
 		vec = TRANS @ vec
 		print(vec)
 
-	# do we need bigints?
-	return round(sum(vec))
+	return sum(vec)
 
 main(__name__)
