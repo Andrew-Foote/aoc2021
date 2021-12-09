@@ -35,4 +35,16 @@ def level1(ip):
 
 	return round(sum(vec))
 
+@register(day=6, level=2)
+def level2(ip):
+	ages = parse(ip)
+	vec = restructure_data(ages)
+
+	for _ in range(256):
+		vec = TRANS @ vec
+		print(vec)
+
+	# do we need bigints?
+	return round(sum(vec))
+
 main(__name__)
