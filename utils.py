@@ -1,4 +1,5 @@
 import functools as ft
+import operator
 
 def common_value(first, *rest):
 	assert all(i == first for i in rest)
@@ -30,3 +31,10 @@ def parse_digits(digits, base):
     return result
 
 parse_bits = ft.partial(parse_digits, base=2)
+
+def product(iterable):
+	"""
+	>>> product((1, 2, 3, 4))
+	24
+	"""
+	return ft.reduce(operator.mul, iterable, 1)
