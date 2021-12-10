@@ -17,22 +17,21 @@ SCORES = {
 def level1(ip):
 	counter = Counter()
 
-	for line in ip:
+	for lineno, line in enumerate(ip):
 		opener_stack = []
 
-		for c in line:
+		for c in line.strip():
 			if c in OPENERS:
 				opener_stack.append(c)
 			elif c in CLOSERS:
 				opener = opener_stack.pop()
+				expected_closer = CLOSERS[OPENERS.index(opener)]
 
-				if opener != c:
+				if c != expected_closer:
 					counter[c] += 1
 					break
 			else:
 				assert False
-
-	print(counter)
 
 	return sum(SCORES[closer] * count for closer, count in counter.items())
 
