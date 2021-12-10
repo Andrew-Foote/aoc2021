@@ -1,25 +1,7 @@
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
 from shared import register, main, get_input
-from utils import common_value
-
-def parse_bits(bits):
-    """Parse an iterable of bits into an integer. Most significant first.
-
-    >>> parse_bits([1, 0, 1, 1, 0])
-    22
-    >>> parse_bits([1, 0, 1, 1, 1])
-    23
-    >>> parse_bits([0, 1, 0, 1, 0])
-    10
-    """
-    result = 0
-
-    for bit in bits:
-        result *= 2
-        result += bit
-
-    return result
+from utils import common_value, parse_bits
 
 def parse(ip):
     for line in ip:
