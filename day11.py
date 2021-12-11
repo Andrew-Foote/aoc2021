@@ -78,4 +78,15 @@ def level1(ip):
 
 	return flashed_count
 
+@register(day=11, level=2)
+def level2(ip):
+	state = parse(ip)
+
+	for i in it.count():
+		flashed_count = step(state)
+
+		if flashed_count == 100:
+			return i + 1 # off-by-one error? not sure why
+
+
 main(__name__)
