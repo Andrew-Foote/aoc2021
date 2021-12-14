@@ -22,10 +22,10 @@ def restructure_data(edges):
 def is_small(cave):
 	return cave.lower() == cave
 
-def cave_paths(connections, start, visited=None, max_visits=1):
+def cave_paths_level1(connections, start, visited=None):
 	"""
 	>>> connections = restructure_data(parse(get_input('12_example')))
-	>>> for p in sorted(cave_paths(connections, 'start')):
+	>>> for p in sorted(cave_paths_level1(connections, 'start')):
 	...     print(','.join(p))
 	start,A,b,A,c,A,end
 	start,A,b,A,end
@@ -37,8 +37,26 @@ def cave_paths(connections, start, visited=None, max_visits=1):
 	start,b,A,c,A,end
 	start,b,A,end
 	start,b,end
-	>>> s = set(cave_paths(connections, 'start', max_visits=2))
-	>>> for l in
+	"""
+	if visited is None:
+		visited = frozenset()
+
+	if is_small(start):
+		visited |= {start}
+
+	if start == 'end':
+		yield (start,)
+
+	for node in connections[start]:
+		if node not in visited:
+			for path_from_node in cave_paths_level1(connections, node, visited):
+				yield (start, *path_from_node)
+
+def cave_paths_level2(connections, start, visited=None, double_visit_used=False):
+	"""
+	>>> connections = restructure_data(parse(get_input('12_example')))
+	>>> for p in sorted(cave_paths_level2(connections, 'start')):
+	...     print(','.join(p))
 	start,A,b,A,b,A,c,A,end
 	start,A,b,A,b,A,end
 	start,A,b,A,b,end
@@ -76,36 +94,36 @@ def cave_paths(connections, start, visited=None, max_visits=1):
 	start,b,d,b,end
 	start,b,end
 	"""
-
 	if visited is None:
 		visited = Counter()
 
 	if is_small(start):
 		visited = Counter(visited)
+
+		if start in visited:
+			double_visit_used = True
+
 		visited[start] += 1
 
 	if start == 'end':
 		yield (start,)
 
 	for node in connections[start]:
-		if visited[node] < max_visits:
-			for path_from_node in cave_paths(connections, node, visited, max_visits):
+		if node not in visited or (not double_visit_used and visited[node] < 2):
+			for path_from_node in cave_paths_level2(connections, node, visited, double_visit_used):
 				yield (start, *path_from_node)
+
 
 @register(day=12, level=1)
 def level1(ip):
 	connections = restructure_data(parse(ip))
-	ps = cave_paths(connections, 'start')
+	ps = cave_paths_level1(connections, 'start')
 	return sum(1 for path in ps)
 
 @register(day=12, level=2)
 def level2(ip):
 	connections = restructure_data(parse(ip))
-	ps = cave_paths(connections, 'start', max_visits=2)
-
-	for p in ps:
-		print(p)
-
+	ps = cave_paths_level2(connections, 'start')
 	return sum(1 for path in ps)
 
 main(__name__)
