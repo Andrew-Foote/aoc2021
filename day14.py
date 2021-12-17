@@ -4,7 +4,7 @@ import re
 from shared import register, main
 
 def parse(ip):
-    template = next(ip)
+    template = next(ip).strip()
     rules = {}
 
     for line in ip:
@@ -18,6 +18,10 @@ def parse(ip):
     return template, rules
 
 def step(template, rules):
+    """
+    >>> step('NNCB', {('N', 'N'): 'C', ('N', 'C'): 'B', ('C', 'B'): 'H'})
+    NCNBCHB
+    """
     polymer = []
 
     for left, right in it.pairwise(template):
@@ -38,6 +42,7 @@ def level1(ip):
 
     counter = Counter(template)
     entries = counter.most_common()
+    print(entries)
     return entries[0][1] - entries[-1][1]
 
 main(__name__)
