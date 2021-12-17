@@ -99,4 +99,13 @@ def level1(ip):
     new_dots = fold(dots, instruction)
     return len(new_dots)
 
+@register(day=13, level=2)
+def level2(ip):
+    dots, instructions = parse(ip)
+    
+    for instruction in instructions:
+        dots = fold(dots, instruction)
+
+    print(dotpicture(dots))
+
 main(__name__)
