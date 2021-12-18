@@ -2,6 +2,7 @@ import functools as ft
 import heapq
 import numpy as np
 from shared import register, main
+from utils import fiter
 
 def parse(ip):
     rows = []
@@ -51,6 +52,45 @@ def dijkstra(root, children, cost):
 @register(day=15, level=1)
 def level1(ip):
     costs = parse(ip)
+    start = (0, 0)
+    shape = costs.shape
+    end = (shape[0] - 1, shape[1] - 1)
+    
+    iterator = dijkstra(
+        start,
+        ft.partial(adjacent_indices, shape=shape),
+        lambda i: costs[i]
+    )
+
+    path = []
+
+    for i, cost in iterator:
+        if i == end:
+            return cost
+
+        path.append(i)
+
+def increment(costs):
+    costs = (costs + 1) % 10
+    costs += costs == 0
+    return costs
+
+def expand(costs):
+    rows = []
+
+    for i in range(5):
+        row = []
+
+        for j in range(5):
+            row.append(fiter(increment, i + j, costs))
+
+        rows.append(row)
+
+    return np.block(rows)
+
+@register(day=15, level=2)
+def level2(ip):
+    costs = expand(parse(ip))
     start = (0, 0)
     shape = costs.shape
     end = (shape[0] - 1, shape[1] - 1)

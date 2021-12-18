@@ -5,6 +5,14 @@ def common_value(first, *rest):
 	assert all(i == first for i in rest)
 	return first
 
+def fiter(f, n, x):
+    y = x
+
+    for _ in range(n):
+        y = f(y)
+
+    return y
+
 def sgn(x):
 	return x // abs(x)
 
