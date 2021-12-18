@@ -4,26 +4,97 @@ import itertools as it
 import re
 from shared import register, main
 
-def repstring_append_with_count(s, c, count):
-    if len(s) > 0 and s[-1][0] == c:
-        letter, prevcount = s[-1]
-        s[-1] = (letter, prevcount + count)
-    else:
-        s.append((c, count))
+@dataclass
+class Polymer:
+    pair_counter: Counter[str]
+    last_letter: str
 
-def repstring_append(s, c):
-    return repstring_append_with_count(s, c, 1)
+    @classmethod
+    def from_string(cls, s):
+        """
+        >>> polymer = Polymer.from_string('NNCB')
+        >>> {pair: count for pair, count in polymer.pair_counter.items() if count > 0}
+        {('N', 'N'): 1, ('N', 'C'): 1, ('C', 'B'): 1}
+        >>> polymer.last_letter
+        'B'
+        """
+        pair_counter = Counter(it.pairwise(s))
+        last_letter = s[-1]
+        return Polymer(pair_counter, last_letter)
 
-def repstring(s):
-    result = []
+    def matches_string(self, s):
+        s_counter = Counter(it.pairwise(s))
+        return self.pair_counter == s_counter and self.last_letter == s[-1]
 
-    for c in s:
-        repstring_append(result, c)
+    def step(self, rules):
+        """
+        >>> polymer = Polymer.from_string('NNCB')
+        >>> rules = {('C', 'H'): 'B', ('H', 'H'): 'N', ('C', 'B'): 'H', ('N', 'H'): 'C', ('H', 'B'): 'C', ('H', 'C'): 'B', ('H', 'N'): 'C', ('N', 'N'): 'C', ('B', 'H'): 'H', ('N', 'C'): 'B', ('N', 'B'): 'B', ('B', 'N'): 'B', ('B', 'B'): 'N', ('B', 'C'): 'B', ('C', 'C'): 'N', ('C', 'N'): 'C'}
+        >>> polymer = polymer.step(rules)
+        >>> polymer.matches_string('NCNBCHB')
+        True
+        >>> polymer = polymer.step(rules)
+        >>> polymer.matches_string('NBCCNBBBCBHCB')
+        True
+        >>> polymer = polymer.step(rules)
+        >>> polymer.matches_string('NBBBCNCCNBBNBNBBCHBHHBCHB')
+        True
+        >>> polymer = polymer.step(rules)
+        >>> polymer.matches_string('NBBNBNBBCCNBCNCCNBBNBBNBBBNBBNBBCBHCBHHNHCBBCBHCB')
+        True
+        """
+        new_pair_counter = Counter()
 
-    return result
+        for (left, right), count in self.pair_counter.items():
+            if (left, right) in rules:
+                between = rules[left, right]
+                new_pair_counter[left, between] += count
+                new_pair_counter[between, right] += count
+            else:
+                new_pair_counter[left, right] += count
+
+        return Polymer(new_pair_counter, self.last_letter)
+
+    def steps(self, rules, count):
+        polymer = self
+
+        for _ in range(count):
+            polymer = polymer.step(rules)
+
+        return polymer
+
+    def letter_counter(self):
+        """
+        >>> polymer = Polymer.from_string('NNCB')
+        >>> rules = {('C', 'H'): 'B', ('H', 'H'): 'N', ('C', 'B'): 'H', ('N', 'H'): 'C', ('H', 'B'): 'C', ('H', 'C'): 'B', ('H', 'N'): 'C', ('N', 'N'): 'C', ('B', 'H'): 'H', ('N', 'C'): 'B', ('N', 'B'): 'B', ('B', 'N'): 'B', ('B', 'B'): 'N', ('B', 'C'): 'B', ('C', 'C'): 'N', ('C', 'N'): 'C'}
+        >>> polymer.steps(rules, 10).letter_counter().most_common()
+        [('B', 1749), ('N', 865), ('C', 298), ('H', 161)]
+        """
+        counter = Counter()
+
+        for (letter, _), count in self.pair_counter.items():
+            if count > 0:
+                counter[letter] += count
+
+        counter[self.last_letter] += 1
+        return counter
+
+    def __len__(self):
+        """
+        >>> polymer = Polymer.from_string('NNCB')
+        >>> rules = {('C', 'H'): 'B', ('H', 'H'): 'N', ('C', 'B'): 'H', ('N', 'H'): 'C', ('H', 'B'): 'C', ('H', 'C'): 'B', ('H', 'N'): 'C', ('N', 'N'): 'C', ('B', 'H'): 'H', ('N', 'C'): 'B', ('N', 'B'): 'B', ('B', 'N'): 'B', ('B', 'B'): 'N', ('B', 'C'): 'B', ('C', 'C'): 'N', ('C', 'N'): 'C'}
+        >>> len(polymer)
+        4
+        >>> len(polymer.steps(rules, 5))
+        97
+        >>> len(polymer.steps(rules, 10))
+        3073
+        """
+        return sum(self.letter_counter().values())
 
 def parse(ip):
-    template = repstring(next(ip).strip())
+    # each letter appears in exactly two pairs, except for the very last one
+    template = Polymer.from_string(next(ip).strip())
     rules = {}
 
     for line in ip:
@@ -36,54 +107,25 @@ def parse(ip):
     ip.close()
     return template, rules
 
-def step(template, rules):
-    """
-    >>> tuple(step([['N', 2], ['C', 1], ['B', 1]], {('N', 'N'): 'C', ('N', 'C'): 'B', ('C', 'B'): 'H'}))
-    (('N', 1), ('C', 1), ('N', 1), ('B', 1), ('C', 1), ('H', 1), ('B', 1))
-    """
-    polymer = []
-
-    for (left, lc), (right, rc) in it.pairwise(template):
-        if (left, left) in rules:
-            for _ in range(lc - 1):
-                repstring_append(polymer, left)
-                repstring_append(polymer, rules[left, left])
-
-            repstring_append(polymer, left)
-        else:
-            repstring_append_with_count(polymer, left, lc)
-
-        if (left, right) in rules:
-            repstring_append(polymer, rules[left, right])
-
-    repstring_append_with_count(polymer, *template[-1])
-    return polymer
-
 @register(day=14, level=1)
 def level1(ip):
-    template, rules = parse(ip)
+    polymer, rules = parse(ip)
 
     for i in range(10):
-        template = step(template, rules)
-        print(f'{i} | {template}')
+        #print({pair: count for pair, count in polymer.pair_counter.items() if count > 0})
+        polymer = polymer.step(rules)
 
-    counter = Counter({letter: count for letter, count in template})
-    print(counter)
-    entries = counter.most_common()
-    print(entries)
+    entries = polymer.letter_counter().most_common()
     return entries[0][1] - entries[-1][1]
 
 @register(day=14, level=2)
 def level2(ip):
-    template, rules = parse(ip)
-    print(f'template: {template}')
+    polymer, rules = parse(ip)
 
-    for _ in range(40):
-        template = step(template, rules)
+    for i in range(40):
+        polymer = polymer.step(rules)
 
-    counter = Counter({letter: count for letter, count in template})
-    entries = counter.most_common()
-    print(entries)
+    entries = polymer.letter_counter().most_common()
     return entries[0][1] - entries[-1][1]
 
 main(__name__)
