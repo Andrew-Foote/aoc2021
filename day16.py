@@ -1,6 +1,6 @@
 from collections import namedtuple
 from shared import register, main
-from utils import digits, parse_digits
+from utils import product, digits, parse_digits
 
 def parse(ip):
     line = next(ip).strip()
@@ -34,7 +34,7 @@ def parse_literal(src, i):
         if not group[0]:
             break
 
-    return value, i
+    return parse_digits(value, 2), i
 
 def parse_length_type_id(src, i):
     return src[i], i + 1
@@ -84,5 +84,29 @@ def level1(ip):
     root_packet, i = parse_packet(bindigits, 0)
     packets = list(dfs(root_packet, lambda packet: packet.subpackets))
     return sum(packet.version for packet in packets)
+
+def eval_(packet):
+    if packet.type_id == 4:
+        return packet.value
+    elif packet.type_id == 0:
+        return sum(map(eval_, packet.subpackets))
+    elif packet.type_id == 1:
+        return product(map(eval_, packet.subpackets))
+    elif packet.type_id == 2:
+        return min(map(eval_, packet.subpackets))
+    elif packet.type_id == 3:
+        return max(map(eval_, packet.subpackets))
+    elif packet.type_id == 5:
+        return 1 * (eval_(packet.subpackets[0]) > eval_(packet.subpackets[1]))
+    elif packet.type_id == 6:
+        return 1 * (eval_(packet.subpackets[0]) < eval_(packet.subpackets[1]))
+    elif packet.type_id == 7:
+        return 1 * (eval_(packet.subpackets[0]) == eval_(packet.subpackets[1]))
+
+@register(day=16, level=2)
+def level2(ip):
+    bindigits = parse(ip)
+    root_packet, i = parse_packet(bindigits, 0)
+    return eval_(root_packet)
 
 main(__name__)
