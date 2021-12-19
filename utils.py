@@ -1,4 +1,5 @@
 import functools as ft
+import itertools as it
 import operator
 
 def common_value(first, *rest):
@@ -15,6 +16,13 @@ def fiter(f, n, x):
 
 def sgn(x):
 	return x // abs(x)
+
+def product(iterable):
+    """
+    >>> product((1, 2, 3, 4))
+    24
+    """
+    return ft.reduce(operator.mul, iterable, 1)
 
 def parse_digits(digits, base):
     """Parse an iterable of digits into an integer. Most significant first.
@@ -40,9 +48,27 @@ def parse_digits(digits, base):
 
 parse_bits = ft.partial(parse_digits, base=2)
 
-def product(iterable):
-	"""
-	>>> product((1, 2, 3, 4))
-	24
-	"""
-	return ft.reduce(operator.mul, iterable, 1)
+def digits(n, base, length=None):
+    """
+    >>> digits(123, 10)
+    [1, 2, 3]
+    >>> digits(0b11010111, 2)
+    [1, 1, 0, 1, 0, 1, 1, 1]
+    >>> digits(0xf, 2, 8)
+    [0, 0, 0, 0, 1, 1, 1, 1]
+    """
+    digits = []
+
+    for i in it.count():
+        if (length is None and not n) or (length is not None and i >= length):
+            break
+
+        digits.append(n % base)
+        n //= base
+
+    digits.reverse()
+    return digits
+
+if __name__ == '__main__':
+    import doctest
+    doctest.testmod()
